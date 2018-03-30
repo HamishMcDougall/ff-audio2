@@ -106,6 +106,8 @@ else{
 
 /*pause stuff
 
+this is a hanges
+
       var onplaying = true;
       var onpause = false;
 
