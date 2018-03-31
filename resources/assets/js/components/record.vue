@@ -21,21 +21,40 @@
           <span class="oi oi-trash"></span>
             Delete recording
         </button>
-        <button type="button" class="btn btn-secondary" v-if="dataUrl.length>0">
+        <button type="button" class="btn btn-secondary" v-if="dataUrl.length>0" v-on:click="submitRecording">
           <span class="oi oi-task"></span>
             Save recording
           </button>
 
-        <audio id="audio" preload="auto" v-if="dataUrl.length>0" v-bind:src="dataUrl"></audio>
 
+          <button type="button" class="btn btn-secondary"  v-on:click="getToken">
+            <span class="oi oi-task"></span>
+              get token
+            </button>
+
+        <audio id="audio" preload="auto" v-if="dataUrl.length>0" v-bind:src="dataUrl"></audio>
+          <div class="">
+            {{tokenAPIData}}
+          </div>
       </div>
 
 </template>
 
 <script>
+
+var recognizeMic = require('watson-speech/speech-to-text/recognize-microphone');
+var WatsonSpeech = require('watson-speech');
+
+
     export default {
         mounted() {
             console.log('Component mounted.')
+
+
+
+
+
+
 
         },
         data: function () {
@@ -43,7 +62,8 @@
          isRecording: false,
          audioRecorder: null,
          recordingData: [],
-         dataUrl: ''
+         dataUrl: '',
+         tokenAPIData:'bluemix token data'
        };
     },
     methods:
@@ -52,8 +72,47 @@
            this.isRecording = !this.isRecording;
         var that = this;
 
+
+
+
+
         //check toggle of the button
       if(this.isRecording){
+
+
+
+
+        fetch('/get-curl')
+    .then(function(response) {
+      console.log(response);
+        return response.text();
+    }).then(function (token) {
+
+      console.log(token);
+
+      var stream = WatsonSpeech.SpeechToText.recognizeMicrophone({
+         token: token,
+         objectMode: true, // send objects instead of text
+         format: false // optional - performs basic formatting on the results such as capitals an periods
+
+     });
+
+
+      stream.setEncoding('utf8'); // get text instead of Buffers for on data events
+
+      stream.on('data', function(data) {
+        console.log(data);
+      });
+
+      stream.on('error', function(err) {
+          console.log(err);
+      });
+
+
+    })
+
+
+
           if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
          console.log('getUserMedia supported.');
          navigator.mediaDevices.getUserMedia (
@@ -144,12 +203,39 @@ this is a hanges
   },
 
         submitRecording: function() {
+          var that = this;
+
+       var blob = new Blob(that.recordingData , { type: 'audio/ogg'});
+       var formData = new FormData();
+       formData.append('recording', blob);
+
+
+
+       axios.post('/recording',
+              formData )
+            .then(function (response) {
+              console.log(response);
+            })
+            .catch(function (error) {
+              console.log(error);
+            });
+
+
         },
         deleteRecording: function() {
           console.log('Deleted recording');
             this.isRecording = false;
             this.recordingData = [];
             this.dataUrl = '';
+        },
+        getToken:function(){
+          axios.post('/get-curl' )
+               .then(function (response) {
+                 console.log(response);
+               })
+               .catch(function (error) {
+                 console.log(error);
+               });
         }
     },
     }

@@ -14,3 +14,9 @@
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::post('/recording', 'RecordingController@postRecording');
+Route::get('/recording/{id}', 'RecordingController@getRecording');
+
+
+Route::post('/get-curl', 'IBMWatsonController@getToken');
